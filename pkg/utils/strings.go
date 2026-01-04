@@ -232,7 +232,8 @@ func EncodePassword(password string, salt string) string {
 
 // EncryptSecret returns a encrypted secret
 func EncryptSecret(secret string, key string) (string, error) {
-	encryptedSecret, err := AESGCMEncrypt(MD5Encode([]byte(key)), []byte(secret)) // md5encode make the aes key's length to 16
+	keyHash := sha256.Sum256([]byte(key))
+	encryptedSecret, err := AESGCMEncrypt(keyHash[:], []byte(secret))
 
 	if err != nil {
 		return "", err
@@ -249,7 +250,16 @@ func DecryptSecret(encyptedSecret string, key string) (string, error) {
 		return "", err
 	}
 
-	secret, err := AESGCMDecrypt(MD5Encode([]byte(key)), []byte(encyptedData))
+	// Try decrypting with SHA256 derived key (new method)
+	keyHash := sha256.Sum256([]byte(key))
+	secret, err := AESGCMDecrypt(keyHash[:], encyptedData)
+
+	if err == nil {
+		return string(secret), nil
+	}
+
+	// Fallback: Try decrypting with MD5 derived key (old method)
+	secret, err = AESGCMDecrypt(MD5Encode([]byte(key)), encyptedData)
 
 	if err != nil {
 		return "", err

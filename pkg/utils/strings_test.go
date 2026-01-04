@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/base64"
 	"fmt"
 	"testing"
 
@@ -163,5 +164,21 @@ func TestEncryptSecretAndDecryptSecret(t *testing.T) {
 	encryptedStr, err := EncryptSecret(str, key)
 	actualValue, err := DecryptSecret(encryptedStr, key)
 	assert.Equal(t, nil, err)
+	assert.Equal(t, expectedValue, actualValue)
+}
+
+func TestDecryptSecret_Compatibility(t *testing.T) {
+	str := "foo"
+	key := "bar"
+	expectedValue := str
+
+	// Manually encrypt using old MD5 method
+	encryptedBytes, err := AESGCMEncrypt(MD5Encode([]byte(key)), []byte(str))
+	assert.NoError(t, err)
+	oldEncryptedStr := base64.StdEncoding.EncodeToString(encryptedBytes)
+
+	// Decrypt using new DecryptSecret function
+	actualValue, err := DecryptSecret(oldEncryptedStr, key)
+	assert.NoError(t, err)
 	assert.Equal(t, expectedValue, actualValue)
 }

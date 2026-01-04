@@ -935,6 +935,10 @@ func loadSecurityConfiguration(config *Config, configFile *ini.File, sectionName
 	config.SecretKeyNoSet = !getConfigItemIsSet(configFile, sectionName, "secret_key")
 	config.SecretKey = getConfigItemStringValue(configFile, sectionName, "secret_key", defaultSecretKey)
 
+	if config.Mode == MODE_PRODUCTION && config.SecretKey == defaultSecretKey {
+		return errs.ErrSecretKeyIsDefault
+	}
+
 	config.TokenExpiredTime = getConfigItemUint32Value(configFile, sectionName, "token_expired_time", defaultTokenExpiredTime)
 
 	if config.TokenExpiredTime < 60 {
